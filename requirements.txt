@@ -32,8 +32,8 @@ beautifulsoup4
 ffmpeg
 ffmpeg-python
 Pyromod 
-tswift
-shutil
+
+
 
 
 
