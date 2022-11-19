@@ -28,6 +28,11 @@ wheel
 py-tgcalls
 python-dotenv
 ujson
+beautifulsoup4
+ffmpeg
+ffmpeg-python
+Pyromod 
+
 
 
 
