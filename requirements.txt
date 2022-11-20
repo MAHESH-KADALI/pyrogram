@@ -8,7 +8,7 @@ marshmallow
 umongo
 requests
 bs4
-git+https://github.com/cinemagoer/cinemagoer
+cinemagoer
 telegraph==2.2.0
 googletrans==3.1.0a0
 opencv-python-headless
