@@ -32,7 +32,7 @@ beautifulsoup4
 ffmpeg
 ffmpeg-python
 Pyromod 
-
+pytz
 
 
 
