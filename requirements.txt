@@ -29,7 +29,7 @@ ujson
 beautifulsoup4
 ffmpeg
 ffmpeg-python
-Pyromod 
+Pyromod==1.5
 pytz
 
 
