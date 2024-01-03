@@ -22,7 +22,6 @@ from typing import Union, List, Iterable
 import pyrogram
 from pyrogram import raw
 from pyrogram import types
-from pyrogram import utils
 
 log = logging.getLogger(__name__)
 
@@ -71,9 +70,12 @@ class GetForumTopicsByID:
             )
         )
 
+        users = {i.id: i for i in r.users}
+        chats = {i.id: i for i in r.chats}
+
         topics = types.List()
 
-        for i in r:
-            topics.append(types.ForumTopic._parse(i))
+        for i in r.topics:
+            topics.append(types.ForumTopic._parse(self, i, users=users, chats=chats))
 
-        return topics if is_iterable else topics[0]
+        return topics if is_iterable else topics[0] if topics else None

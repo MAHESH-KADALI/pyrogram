@@ -51,8 +51,6 @@ class SendStory:
 
         .. include:: /_includes/usable-by/users.rst
 
-        Note: You must pass one of following paramater *animation*, *photo*, *video*
-
         Parameters:
             chat_id (``int`` | ``str``):
                 Unique identifier (int) or username (str) of the target chat.
@@ -61,7 +59,6 @@ class SendStory:
             media (``str`` | ``BinaryIO``):
                 Video or photo to send.
                 Pass a file_id as string to send a animation that exists on the Telegram servers,
-                pass an HTTP URL as a string for Telegram to get a animation from the Internet,
                 pass a file path as string to upload a new animation that exists on your local machine, or
                 pass a binary file-like object with its attribute ".name" set for in-memory uploads.
 
@@ -134,8 +131,11 @@ class SendStory:
         Example:
             .. code-block:: python
 
-                # Send new story
-                await app.send_story(media=file_id, caption='Hello guys.')
+                # Post story to your profile
+                await app.send_story("me", "story.png", caption='My new story!')
+
+                # Post story to channel
+                await app.send_story(123456, "story.png", caption='My new story!')
 
         Raises:
             ValueError: In case of invalid arguments.
@@ -167,16 +167,6 @@ class SendStory:
                     else:
                         media = raw.types.InputMediaUploadedPhoto(
                             file=file,
-                        )
-                elif re.match("^https?://", media):
-                    mime_type = self.guess_mime_type(media)
-                    if mime_type == "video/mp4":
-                        media = raw.types.InputMediaDocumentExternal(
-                            url=media,
-                        )
-                    else:
-                        media = raw.types.InputMediaPhotoExternal(
-                            url=media,
                         )
                 else:
                     media = utils.get_input_media_from_file_id(media)
@@ -230,7 +220,7 @@ class SendStory:
                         peer = await self.resolve_peer(user)
                         if isinstance(peer, raw.types.InputPeerUser):
                             _allowed_users.append(peer)
-                        elif isinstance(peer, raw.types.InputPeerChat):
+                        elif isinstance(peer, (raw.types.InputPeerChat, raw.types.InputPeerChannel)):
                             _allowed_chats.append(peer)
 
                     if _allowed_users:

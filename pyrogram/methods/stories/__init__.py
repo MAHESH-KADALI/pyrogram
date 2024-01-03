@@ -19,11 +19,13 @@
 from .can_send_story import CanSendStory
 from .copy_story import CopyStory
 from .delete_stories import DeleteStories
-from .edit_story import EditStory
+from .edit_story_caption import EditStoryCaption
+from .edit_story_media import EditStoryMedia
+from .edit_story_privacy import EditStoryPrivacy
 from .export_story_link import ExportStoryLink
 from .forward_story import ForwardStory
 from .get_all_stories import GetAllStories
-from .get_peer_stories import GetPeerStories
+from .get_chat_stories import GetChatStories
 from .get_pinned_stories import GetPinnedStories
 from .get_stories import GetStories
 from .get_stories_archive import GetStoriesArchive
@@ -37,11 +39,13 @@ class Stories(
     CanSendStory,
     CopyStory,
     DeleteStories,
-    EditStory,
+    EditStoryCaption,
+    EditStoryMedia,
+    EditStoryPrivacy,
     ExportStoryLink,
     ForwardStory,
     GetAllStories,
-    GetPeerStories,
+    GetChatStories,
     GetPinnedStories,
     GetStories,
     GetStoriesArchive,

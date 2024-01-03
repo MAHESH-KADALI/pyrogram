@@ -38,6 +38,7 @@ class CopyMessage:
         disable_notification: bool = None,
         message_thread_id: int = None,
         reply_to_message_id: int = None,
+        reply_to_chat_id: Union[int, str] = None,
         schedule_date: datetime = None,
         protect_content: bool = None,
         has_spoiler: bool = None,
@@ -87,10 +88,13 @@ class CopyMessage:
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
-                for forum supergroups only.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
+                
+            reply_to_chat_id (``int``, *optional*):
+                If the message is a reply, ID of the original chat.
 
             schedule_date (:py:obj:`~datetime.datetime`, *optional*):
                 Date when the message will be automatically sent.
@@ -125,6 +129,7 @@ class CopyMessage:
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
             reply_to_message_id=reply_to_message_id,
+            reply_to_chat_id=reply_to_chat_id,
             schedule_date=schedule_date,
             protect_content=protect_content,
             has_spoiler=has_spoiler,

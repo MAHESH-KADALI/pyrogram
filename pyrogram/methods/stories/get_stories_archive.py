@@ -16,7 +16,7 @@
 #  You should have received a copy of the GNU Lesser General Public License
 #  along with Pyrogram.  If not, see <http://www.gnu.org/licenses/>.
 
-from typing import AsyncGenerator, Union, Optional
+from typing import AsyncGenerator, Union
 
 import pyrogram
 from pyrogram import raw
@@ -29,8 +29,8 @@ class GetStoriesArchive:
         chat_id: Union[int, str],
         limit: int = 0,
         offset_id: int = 0
-    ) -> Optional[AsyncGenerator["types.Story", None]]:
-        """Get stories archive.
+    ) -> AsyncGenerator["types.Story", None]:
+        """Get all archived stories from a chat by using chat identifier.
 
         .. include:: /_includes/usable-by/users.rst
 

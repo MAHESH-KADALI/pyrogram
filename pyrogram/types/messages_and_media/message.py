@@ -25,7 +25,7 @@ import pyrogram
 from pyrogram import raw, enums
 from pyrogram import types
 from pyrogram import utils
-from pyrogram.errors import MessageIdsEmpty, PeerIdInvalid, ChannelPrivate
+from pyrogram.errors import MessageIdsEmpty, PeerIdInvalid, ChannelPrivate, BotMethodInvalid
 from pyrogram.parser import utils as parser_utils, Parser
 from ..object import Object
 from ..update import Update
@@ -78,7 +78,7 @@ class Message(Object, Update):
         chat (:obj:`~pyrogram.types.Chat`, *optional*):
             Conversation the message belongs to.
 
-        topics (:obj:`~pyrogram.types.ForumTopic`, *optional*):
+        topic (:obj:`~pyrogram.types.ForumTopic`, *optional*):
             Topic the message belongs to.
 
         forward_from (:obj:`~pyrogram.types.User`, *optional*):
@@ -99,12 +99,9 @@ class Message(Object, Update):
         forward_date (:py:obj:`~datetime.datetime`, *optional*):
             For forwarded messages, date the original message was sent.
 
-        is_topic_message (``bool``, *optional*):
-            True, if the message is sent to a forum topic
-
         message_thread_id (``int``, *optional*):
             Unique identifier of a message thread to which the message belongs.
-            for supergroups only
+            For supergroups only.
 
         reply_to_message_id (``int``, *optional*):
             The id of the message which this message directly replied to.
@@ -143,12 +140,17 @@ class Message(Object, Update):
             You can use ``media = getattr(message, message.media.value)`` to access the media message.
 
         invert_media (``bool``, *optional*):
-            Invert media.
+            If True, link preview will be shown above the message text.
+            Otherwise, the link preview will be shown below the message text.
 
         edit_date (:py:obj:`~datetime.datetime`, *optional*):
             Date the message was last edited.
 
-        media_group_id (``str``, *optional*):
+        edit_hidden (``bool``, *optional*):
+            The message shown as not modified.
+            A message can be not modified in case it has received a reaction.
+
+        media_group_id (``int``, *optional*):
             The unique identifier of a media message group this message belongs to.
 
         author_signature (``str``, *optional*):
@@ -201,7 +203,10 @@ class Message(Object, Update):
         game (:obj:`~pyrogram.types.Game`, *optional*):
             Message is a game, information about the game.
 
-        story (:obj:`~pyrogram.types.MessageStory`, *optional*):
+        giveaway (:obj:`~pyrogram.types.Giveaway`, *optional*):
+            Message is a giveaway, information about the giveaway.
+
+        story (:obj:`~pyrogram.types.Story`, *optional*):
             Message is a story, information about the story.
 
         video (:obj:`~pyrogram.types.Video`, *optional*):
@@ -349,6 +354,12 @@ class Message(Object, Update):
         web_app_data (:obj:`~pyrogram.types.WebAppData`, *optional*):
             Service message: web app data sent to the bot.
 
+        gift_code (:obj:`~pyrogram.types.GiftCode`, *optional*):
+            Service message: gift code information.
+
+        requested_chats (List of :obj:`~pyrogram.types.Chat`, *optional*):
+            Service message: requested chats information.
+
         reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
             Additional interface options. An object for an inline keyboard, custom reply keyboard,
             instructions to remove reply keyboard or to force a reply from the user.
@@ -371,14 +382,13 @@ class Message(Object, Update):
         sender_chat: "types.Chat" = None,
         date: datetime = None,
         chat: "types.Chat" = None,
-        topics: "types.ForumTopic" = None,
+        topic: "types.ForumTopic" = None,
         forward_from: "types.User" = None,
         forward_sender_name: str = None,
         forward_from_chat: "types.Chat" = None,
         forward_from_message_id: int = None,
         forward_signature: str = None,
         forward_date: datetime = None,
-        is_topic_message: bool = None,
         message_thread_id: int = None,
         reply_to_message_id: int = None,
         reply_to_story_id: int = None,
@@ -394,7 +404,8 @@ class Message(Object, Update):
         media: "enums.MessageMediaType" = None,
         invert_media: bool = None,
         edit_date: datetime = None,
-        media_group_id: str = None,
+        edit_hidden: bool = None,
+        media_group_id: int = None,
         author_signature: str = None,
         has_protected_content: bool = None,
         has_media_spoiler: bool = None,
@@ -410,7 +421,8 @@ class Message(Object, Update):
         animation: "types.Animation" = None,
         game: "types.Game" = None,
         giveaway: "types.Giveaway" = None,
-        story: "types.MessageStory" = None,
+        giveaway_result: "types.GiveawayResult" = None,
+        story: "types.Story" = None,
         video: "types.Video" = None,
         voice: "types.Voice" = None,
         video_note: "types.VideoNote" = None,
@@ -451,6 +463,8 @@ class Message(Object, Update):
         video_chat_ended: "types.VideoChatEnded" = None,
         video_chat_members_invited: "types.VideoChatMembersInvited" = None,
         web_app_data: "types.WebAppData" = None,
+        gift_code: "types.GiftCode" = None,
+        requested_chats: List["types.Chat"] = None,
         giveaway_launched: bool = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
@@ -467,14 +481,13 @@ class Message(Object, Update):
         self.sender_chat = sender_chat
         self.date = date
         self.chat = chat
-        self.topics = topics
+        self.topic = topic
         self.forward_from = forward_from
         self.forward_sender_name = forward_sender_name
         self.forward_from_chat = forward_from_chat
         self.forward_from_message_id = forward_from_message_id
         self.forward_signature = forward_signature
         self.forward_date = forward_date
-        self.is_topic_message = is_topic_message
         self.message_thread_id = message_thread_id
         self.reply_to_message_id = reply_to_message_id
         self.reply_to_story_id = reply_to_story_id
@@ -490,6 +503,7 @@ class Message(Object, Update):
         self.media = media
         self.invert_media = invert_media
         self.edit_date = edit_date
+        self.edit_hidden = edit_hidden
         self.media_group_id = media_group_id
         self.author_signature = author_signature
         self.has_protected_content = has_protected_content
@@ -506,6 +520,7 @@ class Message(Object, Update):
         self.animation = animation
         self.game = game
         self.giveaway = giveaway
+        self.giveaway_result = giveaway_result
         self.story = story
         self.video = video
         self.voice = voice
@@ -548,6 +563,8 @@ class Message(Object, Update):
         self.video_chat_ended = video_chat_ended
         self.video_chat_members_invited = video_chat_members_invited
         self.web_app_data = web_app_data
+        self.gift_code = gift_code
+        self.requested_chats = requested_chats
         self.giveaway_launched = giveaway_launched
         self.reactions = reactions
 
@@ -588,6 +605,7 @@ class Message(Object, Update):
             message_thread_id = None
             action = message.action
 
+            text = None
             new_chat_members = None
             left_chat_member = None
             new_chat_title = None
@@ -597,7 +615,6 @@ class Message(Object, Update):
             group_chat_created = None
             channel_chat_created = None
             new_chat_photo = None
-            is_topic_message = None
             forum_topic_created = None
             forum_topic_closed = None
             forum_topic_reopened = None
@@ -609,7 +626,9 @@ class Message(Object, Update):
             video_chat_ended = None
             video_chat_members_invited = None
             web_app_data = None
+            gift_code = None
             giveaway_launched = None
+            requested_chats = None
 
             service_type = None
 
@@ -643,6 +662,9 @@ class Message(Object, Update):
             elif isinstance(action, raw.types.MessageActionChatEditPhoto):
                 new_chat_photo = types.Photo._parse(client, action.photo)
                 service_type = enums.MessageServiceType.NEW_CHAT_PHOTO
+            elif isinstance(action, raw.types.MessageActionCustomAction):
+                text = message.action.message
+                service_type = enums.MessageServiceType.CUSTOM_ACTION
             elif isinstance(action, raw.types.MessageActionTopicCreate):
                 forum_topic_created = types.ForumTopicCreated._parse(message)
                 service_type = enums.MessageServiceType.FORUM_TOPIC_CREATED
@@ -682,6 +704,34 @@ class Message(Object, Update):
             elif isinstance(action, raw.types.MessageActionGiveawayLaunch):
                 giveaway_launched = True
                 service_type = enums.MessageServiceType.GIVEAWAY_LAUNCH
+            elif isinstance(action, raw.types.MessageActionGiftCode):
+                gift_code = types.GiftCode._parse(client, action, chats)
+                service_type = enums.MessageServiceType.GIFT_CODE
+            elif isinstance(action, raw.types.MessageActionRequestedPeer):
+                _requested_chats = []
+
+                for requested_peer in action.peers:
+                    chat_id = utils.get_peer_id(requested_peer)
+                    peer_type = utils.get_peer_type(chat_id)
+
+                    if peer_type == "user":
+                        chat_type = enums.ChatType.PRIVATE
+                    elif peer_type == "chat":
+                        chat_type = enums.ChatType.GROUP
+                    else:
+                        chat_type = enums.ChatType.CHANNEL
+
+                    _requested_chats.append(
+                        types.Chat(
+                            id=chat_id,
+                            type=chat_type,
+                            client=client
+                        )
+                    )
+
+                requested_chats = types.List(_requested_chats) or None
+
+                service_type = enums.MessageServiceType.REQUESTED_CHAT
 
             from_user = types.User._parse(client, users.get(user_id, None))
             sender_chat = types.Chat._parse(client, message, users, chats, is_chat=False) if not from_user else None
@@ -691,10 +741,10 @@ class Message(Object, Update):
                 message_thread_id=message_thread_id,
                 date=utils.timestamp_to_datetime(message.date),
                 chat=types.Chat._parse(client, message, users, chats, is_chat=True),
-                topics=None,
                 from_user=from_user,
                 sender_chat=sender_chat,
                 service=service_type,
+                text=text,
                 new_chat_members=new_chat_members,
                 left_chat_member=left_chat_member,
                 new_chat_title=new_chat_title,
@@ -704,7 +754,6 @@ class Message(Object, Update):
                 migrate_from_chat_id=-migrate_from_chat_id if migrate_from_chat_id else None,
                 group_chat_created=group_chat_created,
                 channel_chat_created=channel_chat_created,
-                is_topic_message=is_topic_message,
                 forum_topic_created=forum_topic_created,
                 forum_topic_closed=forum_topic_closed,
                 forum_topic_reopened=forum_topic_reopened,
@@ -717,6 +766,8 @@ class Message(Object, Update):
                 video_chat_members_invited=video_chat_members_invited,
                 web_app_data=web_app_data,
                 giveaway_launched=giveaway_launched,
+                gift_code=gift_code,
+                requested_chats=requested_chats,
                 client=client
                 # TODO: supergroup_chat_created
             )
@@ -750,13 +801,11 @@ class Message(Object, Update):
 
             client.message_cache[(parsed_message.chat.id, parsed_message.id)] = parsed_message
 
-            if message.reply_to:
-                if message.reply_to.forum_topic:
-                    if message.reply_to.reply_to_top_id:
-                        parsed_message.message_thread_id = message.reply_to.reply_to_top_id
-                    else:
-                        parsed_message.message_thread_id = message.reply_to.reply_to_msg_id
-                    parsed_message.is_topic_message = True
+            if message.reply_to and message.reply_to.forum_topic:
+                if message.reply_to.reply_to_top_id:
+                    parsed_message.message_thread_id = message.reply_to.reply_to_top_id
+                else:
+                    parsed_message.message_thread_id = message.reply_to.reply_to_msg_id
 
             return parsed_message
 
@@ -771,7 +820,6 @@ class Message(Object, Update):
             forward_from_message_id = None
             forward_signature = None
             forward_date = None
-            is_topic_message = None
 
             forward_header = message.fwd_from  # type: raw.types.MessageFwdHeader
 
@@ -797,6 +845,7 @@ class Message(Object, Update):
             venue = None
             game = None
             giveaway = None
+            giveaway_result = None
             story = None
             audio = None
             voice = None
@@ -833,8 +882,18 @@ class Message(Object, Update):
                 elif isinstance(media, raw.types.MessageMediaGiveaway):
                     giveaway = types.Giveaway._parse(client, media, chats)
                     media_type = enums.MessageMediaType.GIVEAWAY
+                elif isinstance(media, raw.types.MessageMediaGiveawayResults):
+                    giveaway_result = await types.GiveawayResult._parse(client, media, users, chats)
+                    media_type = enums.MessageMediaType.GIVEAWAY_RESULT
                 elif isinstance(media, raw.types.MessageMediaStory):
-                    story = types.MessageStory._parse(client, media, users, chats)
+                    if media.story:
+                        story = await types.Story._parse(client, media.story, users, chats, media.peer)
+                    else:
+                        try:
+                            story = await client.get_stories(utils.get_peer_id(media.peer), media.id)
+                        except BotMethodInvalid:
+                            story = await types.Story._parse(client, media, users, chats, media.peer)
+
                     media_type = enums.MessageMediaType.STORY
                 elif isinstance(media, raw.types.MessageMediaDocument):
                     doc = media.document
@@ -880,7 +939,14 @@ class Message(Object, Update):
                             media_type = enums.MessageMediaType.DOCUMENT
                 elif isinstance(media, raw.types.MessageMediaWebPage):
                     if isinstance(media.webpage, raw.types.WebPage):
-                        web_page = types.WebPage._parse(client, media.webpage, media.force_large_media, media.force_small_media, media.manual)
+                        web_page = types.WebPage._parse(
+                            client,
+                            media.webpage,
+                            getattr(media, "force_large_media", None),
+                            getattr(media, "force_small_media", None),
+                            getattr(media, "manual", None),
+                            getattr(media, "safe", None)
+                        )
                         media_type = enums.MessageMediaType.WEB_PAGE
                     else:
                         media = None
@@ -917,7 +983,6 @@ class Message(Object, Update):
                 message_thread_id=message_thread_id,
                 date=utils.timestamp_to_datetime(message.date),
                 chat=types.Chat._parse(client, message, users, chats, is_chat=True),
-                topics=None,
                 from_user=from_user,
                 sender_chat=sender_chat,
                 text=(
@@ -949,13 +1014,13 @@ class Message(Object, Update):
                 forward_from_message_id=forward_from_message_id,
                 forward_signature=forward_signature,
                 forward_date=forward_date,
-                is_topic_message=is_topic_message,
                 mentioned=message.mentioned,
                 scheduled=is_scheduled,
                 from_scheduled=message.from_scheduled,
                 media=media_type,
                 invert_media=getattr(message, "invert_media", None),
                 edit_date=utils.timestamp_to_datetime(message.edit_date),
+                edit_hidden=message.edit_hide,
                 media_group_id=message.grouped_id,
                 photo=photo,
                 location=location,
@@ -966,6 +1031,7 @@ class Message(Object, Update):
                 animation=animation,
                 game=game,
                 giveaway=giveaway,
+                giveaway_result=giveaway_result,
                 story=story,
                 video=video,
                 video_note=video_note,
@@ -994,17 +1060,11 @@ class Message(Object, Update):
                             parsed_message.reply_to_message_id = message.reply_to.reply_to_msg_id
                         else:
                             thread_id = message.reply_to.reply_to_msg_id
+
                         parsed_message.message_thread_id = thread_id
-                        parsed_message.is_topic_message = True
+
                         if topics:
-                            parsed_message.topics = types.ForumTopic._parse(topics[thread_id])
-                        else:
-                            try:
-                                msg = await client.get_messages(parsed_message.chat.id,message.id)
-                                if getattr(msg, "topics"):
-                                    parsed_message.topics = msg.topics
-                            except Exception:
-                                pass
+                            parsed_message.topic = types.ForumTopic._parse(client, topics[thread_id], users=users, chats=chats)
                     else:
                         if message.reply_to.quote:
                             quote_entities = [types.MessageEntity._parse(client, entity, users) for entity in message.reply_to.quote_entities]
@@ -1021,6 +1081,7 @@ class Message(Object, Update):
                                 if media is None or web_page is not None
                                 else None
                             )
+
                         parsed_message.reply_to_message_id = message.reply_to.reply_to_msg_id
                         parsed_message.reply_to_top_message_id = message.reply_to.reply_to_top_id
                 else:
@@ -1059,10 +1120,19 @@ class Message(Object, Update):
                                 parsed_message.reply_to_story_user_id,
                                 parsed_message.reply_to_story_id
                             )
-                        except Exception:
+                        except BotMethodInvalid:
                             pass
                         else:
                             parsed_message.reply_to_story = reply_to_story
+
+            if parsed_message.topic is None and parsed_message.chat.is_forum:
+                try:
+                    parsed_message.topic = await client.get_forum_topics_by_id(
+                        chat_id=parsed_message.chat.id,
+                        topic_ids=parsed_message.message_thread_id or 1
+                    )
+                except BotMethodInvalid:
+                    pass
 
             if not parsed_message.poll:  # Do not cache poll messages
                 client.message_cache[(parsed_message.chat.id, parsed_message.id)] = parsed_message
@@ -1117,6 +1187,7 @@ class Message(Object, Update):
         disable_web_page_preview: bool = None,
         disable_notification: bool = None,
         message_thread_id: int = None,
+        invert_media: bool = None,
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
@@ -1167,7 +1238,12 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
+
+            invert_media (``bool``, *optional*):
+                If True, link preview will be shown above the message text.
+                Otherwise, the link preview will be shown below the message text.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -1200,6 +1276,9 @@ class Message(Object, Update):
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
 
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
+
         return await self._client.send_message(
             chat_id=self.chat.id,
             text=text,
@@ -1208,6 +1287,7 @@ class Message(Object, Update):
             disable_web_page_preview=disable_web_page_preview,
             disable_notification=disable_notification,
             message_thread_id=message_thread_id,
+            invert_media=invert_media,
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
@@ -1305,7 +1385,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -1355,6 +1436,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_animation(
             chat_id=self.chat.id,
@@ -1460,7 +1544,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -1510,6 +1595,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_audio(
             chat_id=self.chat.id,
@@ -1591,7 +1679,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -1617,6 +1706,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_cached_media(
             chat_id=self.chat.id,
@@ -1729,7 +1821,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -1759,6 +1852,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_contact(
             chat_id=self.chat.id,
@@ -1858,7 +1954,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -1915,6 +2012,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_document(
             chat_id=self.chat.id,
@@ -1980,7 +2080,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -2000,6 +2101,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_game(
             chat_id=self.chat.id,
@@ -2056,7 +2160,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``bool``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -2082,6 +2187,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_inline_bot_result(
             chat_id=self.chat.id,
@@ -2146,7 +2254,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
@@ -2172,6 +2281,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_location(
             chat_id=self.chat.id,
@@ -2228,7 +2340,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -2255,6 +2368,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_media_group(
             chat_id=self.chat.id,
@@ -2341,7 +2457,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -2391,6 +2508,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_photo(
             chat_id=self.chat.id,
@@ -2517,7 +2637,8 @@ class Message(Object, Update):
                 Protects the contents of the sent message from forwarding and saving.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -2550,6 +2671,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_poll(
             chat_id=self.chat.id,
@@ -2628,7 +2752,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -2682,6 +2807,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_sticker(
             chat_id=self.chat.id,
@@ -2768,7 +2896,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
@@ -2798,6 +2927,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_venue(
             chat_id=self.chat.id,
@@ -2913,7 +3045,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message.
@@ -2963,6 +3096,9 @@ class Message(Object, Update):
 
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
+
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
 
         return await self._client.send_video(
             chat_id=self.chat.id,
@@ -3054,7 +3190,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
@@ -3109,6 +3246,9 @@ class Message(Object, Update):
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
 
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
+
         return await self._client.send_video_note(
             chat_id=self.chat.id,
             video_note=video_note,
@@ -3139,6 +3279,7 @@ class Message(Object, Update):
         reply_to_message_id: int = None,
         quote_text: str = None,
         quote_entities: List["types.MessageEntity"] = None,
+        ttl_seconds: int = None,
         reply_markup: Union[
             "types.InlineKeyboardMarkup",
             "types.ReplyKeyboardMarkup",
@@ -3194,7 +3335,8 @@ class Message(Object, Update):
                 Users will receive a notification with no sound.
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             reply_to_message_id (``int``, *optional*):
                 If the message is a reply, ID of the original message
@@ -3204,6 +3346,11 @@ class Message(Object, Update):
 
             quote_entities (List of :obj:`~pyrogram.types.MessageEntity`):
                 List of special entities that appear in quote text, which can be specified instead of *parse_mode*.
+
+            ttl_seconds (``int``, *optional*):
+                Self-Destruct Timer.
+                If you set a timer, the voice note will self-destruct in *ttl_seconds*
+                seconds after it was listened.
 
             reply_markup (:obj:`~pyrogram.types.InlineKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardMarkup` | :obj:`~pyrogram.types.ReplyKeyboardRemove` | :obj:`~pyrogram.types.ForceReply`, *optional*):
                 Additional interface options. An object for an inline keyboard, custom reply keyboard,
@@ -3245,6 +3392,9 @@ class Message(Object, Update):
         if reply_to_message_id is None and quote:
             reply_to_message_id = self.id
 
+        if message_thread_id is None:
+            message_thread_id = self.message_thread_id
+
         return await self._client.send_voice(
             chat_id=self.chat.id,
             voice=voice,
@@ -3257,6 +3407,7 @@ class Message(Object, Update):
             reply_to_message_id=reply_to_message_id,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            ttl_seconds=ttl_seconds,
             reply_markup=reply_markup,
             progress=progress,
             progress_args=progress_args
@@ -3485,7 +3636,8 @@ class Message(Object, Update):
                 For a contact that exists in your Telegram address book you can use his phone number (str).
 
             message_thread_id (``int``, *optional*):
-                Unique identifier of a message thread to which the message belongs; for supergroups only
+                Unique identifier of a message thread to which the message belongs.
+                For supergroups only.
 
             disable_notification (``bool``, *optional*):
                 Sends the message silently.
@@ -3572,7 +3724,7 @@ class Message(Object, Update):
 
             message_thread_id (``int``, *optional*):
                 Unique identifier for the target message thread (topic) of the forum.
-                for forum supergroups only.
+                For supergroups only.
 
             reply_to_chat_id (``int``, *optional*):
                 If the message is a reply, ID of the original chat.
@@ -3639,6 +3791,7 @@ class Message(Object, Update):
                 disable_notification=disable_notification,
                 message_thread_id=message_thread_id,
                 reply_to_message_id=reply_to_message_id,
+                reply_to_chat_id=reply_to_chat_id,
                 quote_text=quote_text,
                 quote_entities=quote_entities,
                 schedule_date=schedule_date,
@@ -3892,7 +4045,7 @@ class Message(Object, Update):
         else:
             await self.reply(button, quote=quote)
 
-    async def react(self, emoji: Union[int, str] = None, big: bool = False) -> bool:
+    async def react(self, emoji: Union[int, str, List[Union[int, str]]] = None, big: bool = False) -> bool:
         """Bound method *react* of :obj:`~pyrogram.types.Message`.
 
         Use as a shortcut for:
@@ -3911,9 +4064,10 @@ class Message(Object, Update):
                 await message.react(emoji="🔥")
 
         Parameters:
-            emoji (``str``, *optional*):
+            emoji (``int`` | ``str`` | List of ``int`` | ``str``, *optional*):
                 Reaction emoji.
-                Pass "" as emoji (default) to retract the reaction.
+                Pass None as emoji (default) to retract the reaction.
+                Pass list of int or str to react multiple emojis.
 
             big (``bool``, *optional*):
                 Pass True to show a bigger and longer reaction.
