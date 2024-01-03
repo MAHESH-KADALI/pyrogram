@@ -263,47 +263,34 @@ def unpack_inline_message_id(inline_message_id: str) -> "raw.base.InputBotInline
 
 MIN_CHANNEL_ID = -1002147483647
 MAX_CHANNEL_ID = -1000000000000
-MIN_CHAT_ID = -2147483647
+MIN_CHAT_ID = -999999999999
 MAX_USER_ID_OLD = 2147483647
 MAX_USER_ID = 999999999999
 
 
-def get_raw_peer_id(peer: raw.base.Peer) -> Optional[int]:
+def get_raw_peer_id(peer: Union[raw.base.Peer, raw.base.InputPeer]) -> Optional[int]:
     """Get the raw peer id from a Peer object"""
-    if isinstance(peer, raw.types.PeerUser):
+    if isinstance(peer, (raw.types.PeerUser, raw.types.InputPeerUser)):
         return peer.user_id
 
-    if isinstance(peer, raw.types.PeerChat):
+    if isinstance(peer, (raw.types.PeerChat, raw.types.InputPeerChat)):
         return peer.chat_id
 
-    if isinstance(peer, raw.types.PeerChannel):
-        return peer.channel_id
-
-    return None
-
-def get_input_peer_id(peer: raw.base.InputPeer) -> Optional[int]:
-    """Get the raw peer id from a InputPeer object"""
-    if isinstance(peer, raw.types.InputPeerUser):
-        return peer.user_id
-
-    if isinstance(peer, raw.types.InputPeerChat):
-        return peer.chat_id
-
-    if isinstance(peer, raw.types.InputPeerChannel):
+    if isinstance(peer, (raw.types.PeerChannel, raw.types.InputPeerChannel)):
         return peer.channel_id
 
     return None
 
 
-def get_peer_id(peer: raw.base.Peer) -> int:
+def get_peer_id(peer: Union[raw.base.Peer, raw.base.InputPeer]) -> int:
     """Get the non-raw peer id from a Peer object"""
-    if isinstance(peer, raw.types.PeerUser):
+    if isinstance(peer, (raw.types.PeerUser, raw.types.InputPeerUser)):
         return peer.user_id
 
-    if isinstance(peer, raw.types.PeerChat):
+    if isinstance(peer, (raw.types.PeerChat, raw.types.InputPeerChat)):
         return -peer.chat_id
 
-    if isinstance(peer, raw.types.PeerChannel):
+    if isinstance(peer, (raw.types.PeerChannel, raw.types.InputPeerChannel)):
         return MAX_CHANNEL_ID - peer.channel_id
 
     raise ValueError(f"Peer type invalid: {peer}")
@@ -321,12 +308,14 @@ def get_peer_type(peer_id: int) -> str:
 
     raise ValueError(f"Peer id invalid: {peer_id}")
 
+
 def get_reply_to(
     reply_to_message_id: Optional[int] = None,
     message_thread_id: Optional[int] = None,
     reply_to_peer: Optional[raw.base.InputPeer] = None,
     quote_text: Optional[str] = None,
     quote_entities: Optional[List[raw.base.MessageEntity]] = None,
+    quote_offset: Optional[int] = None,
     reply_to_story_id: Optional[int] = None
 ) -> Optional[Union[raw.types.InputReplyToMessage, raw.types.InputReplyToStory]]:
     """Get InputReply for reply_to argument"""
@@ -340,9 +329,11 @@ def get_reply_to(
             reply_to_peer_id=reply_to_peer,
             quote_text=quote_text,
             quote_entities=quote_entities,
+            quote_offset=quote_offset,
         )
 
     return None
+
 
 def get_channel_id(peer_id: int) -> int:
     return MAX_CHANNEL_ID - peer_id

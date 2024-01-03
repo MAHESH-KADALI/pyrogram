@@ -49,7 +49,7 @@ from pyrogram.errors import (
 from pyrogram.handlers.handler import Handler
 from pyrogram.methods import Methods
 from pyrogram.session import Auth, Session
-from pyrogram.storage import FileStorage, MemoryStorage
+from pyrogram.storage import Storage, FileStorage, MemoryStorage
 from pyrogram.types import User, TermsOfService
 from pyrogram.utils import ainput
 from .dispatcher import Dispatcher
@@ -177,6 +177,10 @@ class Client(Methods):
             Set the maximum amount of concurrent transmissions (uploads & downloads).
             A value that is too high may result in network related issues.
             Defaults to 1.
+
+        storage_engine (:obj:`~pyrogram.storage.Storage`, *optional*):
+            Pass an instance of your own implementation of session storage engine.
+            Useful when you want to store your session in databases like Mongo, Redis, etc.
     """
 
     APP_VERSION = f"Pyrogram {__version__}"
@@ -225,7 +229,8 @@ class Client(Methods):
         takeout: bool = None,
         sleep_threshold: int = Session.SLEEP_THRESHOLD,
         hide_password: bool = False,
-        max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS
+        max_concurrent_transmissions: int = MAX_CONCURRENT_TRANSMISSIONS,
+        storage_engine: Storage = None
     ):
         super().__init__()
 
@@ -261,6 +266,8 @@ class Client(Methods):
             self.storage = MemoryStorage(self.name, self.session_string)
         elif self.in_memory:
             self.storage = MemoryStorage(self.name)
+        elif isinstance(storage_engine, Storage):
+            self.storage = storage_engine
         else:
             self.storage = FileStorage(self.name, self.workdir)
 
@@ -493,15 +500,15 @@ class Client(Methods):
                 is_min = True
                 continue
 
-            username = None
+            usernames = None
             phone_number = None
 
             if isinstance(peer, raw.types.User):
                 peer_id = peer.id
                 access_hash = peer.access_hash
-                username = (
-                    peer.username.lower() if peer.username
-                    else peer.usernames[0].username.lower() if peer.usernames
+                usernames = (
+                    [peer.username.lower()] if peer.username
+                    else [username.username.lower() for username in peer.usernames] if peer.usernames
                     else None
                 )
                 phone_number = peer.phone
@@ -513,9 +520,9 @@ class Client(Methods):
             elif isinstance(peer, raw.types.Channel):
                 peer_id = utils.get_channel_id(peer.id)
                 access_hash = peer.access_hash
-                username = (
-                    peer.username.lower() if peer.username
-                    else peer.usernames[0].username.lower() if peer.usernames
+                usernames = (
+                    [peer.username.lower()] if peer.username
+                    else [username.username.lower() for username in peer.usernames] if peer.usernames
                     else None
                 )
                 peer_type = "channel" if peer.broadcast else "supergroup"
@@ -526,7 +533,7 @@ class Client(Methods):
             else:
                 continue
 
-            parsed_peers.append((peer_id, access_hash, peer_type, username, phone_number))
+            parsed_peers.append((peer_id, access_hash, peer_type, usernames, phone_number))
 
         await self.storage.update_peers(parsed_peers)
 
@@ -814,7 +821,7 @@ class Client(Methods):
         offset: int = 0,
         progress: Callable = None,
         progress_args: tuple = ()
-    ) -> Optional[AsyncGenerator[bytes, None]]:
+    ) -> AsyncGenerator[bytes, None]:
         async with self.get_file_semaphore:
             file_type = file_id.file_type
 
